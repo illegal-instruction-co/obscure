@@ -4,6 +4,8 @@
 
 #include <windows.h>
 
+using namespace std;
+
 using namespace obscure::core;
 
 FakeExecutableRegion::FakeExecutableRegion()
@@ -20,7 +22,7 @@ FakeExecutableRegion::FakeExecutableRegion()
 
     p[_size - 1] = 0xC3; // RET at the end
 
-    _region = std::shared_ptr<void>(region, [](void* p) {
+    _region = shared_ptr<void>(region, [](void* p) {
         if (p)
             VirtualFree(p, 0, MEM_RELEASE);
     });

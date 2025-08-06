@@ -1,6 +1,6 @@
-#include "obscure/def.h"
+#include <obscure/def.h>
 
-#include "obscure/core/ThreadSpoofer.h"
+#include <obscure/core/ThreadSpoofer.h>
 
 #include <iostream>
 #include <thread>

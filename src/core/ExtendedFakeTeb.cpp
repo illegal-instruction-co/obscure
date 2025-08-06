@@ -38,7 +38,7 @@ void ExtendedFakeTeb::InitializeFakeTeb()
 
     fakeTeb->LastErrorValue = GetLastError();
 
-    _fakeTeb = std::shared_ptr<void>(teb, [](void* p) {
+    _fakeTeb = shared_ptr<void>(teb, [](void* p) {
         if (p)
             VirtualFree(p, 0, MEM_RELEASE);
     });
