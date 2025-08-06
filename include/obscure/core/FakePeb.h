@@ -1,4 +1,3 @@
-// src/core/FakePeb.h
 #pragma once
 
 #include <memory>
