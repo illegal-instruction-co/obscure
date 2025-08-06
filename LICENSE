@@ -1,0 +1,22 @@
+Business Source License 1.1
+
+Parameters
+
+Licensor: MEHMET BERKAY KARATAS
+Licensed Work: obscure
+Additional Use Grant: Non-commercial use, academic research, and security testing.
+Change Date: 2025-08-06
+Change License: Apache License, Version 2.0
+
+TERMS
+
+The Licensor hereby grants you the right to copy, modify, create derivative works, and distribute the Licensed Work, subject to the following limitations:
+
+1. You may use the Licensed Work only for non-commercial purposes.
+2. After the Change Date, the Licensed Work will be made available under the Change License.
+3. If you operate a service that uses the Licensed Work, you must make the source code available under this same license.
+4. You must retain this license file in all copies or substantial portions of the Licensed Work.
+
+...
+
+(Full license text can be found at https://mariadb.com/bsl11)
