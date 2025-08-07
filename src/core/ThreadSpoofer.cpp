@@ -6,9 +6,7 @@
 #include "obscure/core/FakePeb.h"
 
 #include <minhook/include/MinHook.h>
-
 #include <cstring>
-
 #include <windows.h>
 
 using namespace std;
@@ -21,6 +19,7 @@ static NtQueryInformationProcessFn _originalNtQueryInformationProcess = nullptr;
 
 static void* globalFakeTeb = nullptr;
 static void* globalFakePeb = nullptr;
+
 static FakeExecutableRegion fakeCodeRegion;
 static FakeCallstackAllocator fakeStackAllocator;
 static FakePeb fakePeb;
@@ -43,7 +42,11 @@ bool ThreadSpoofer::CreateSpoofedTeb()
     if (!fakePeb.Initialize())
         return false;
 
-    globalFakePeb = fakePeb.GetPebAddress().get();
+    void* peb = fakePeb.GetPebAddress().get();
+    _fakePeb = fakePeb.GetPebAddress();
+    globalFakePeb = peb;
+
+    _fakeCodeRegion = fakeCodeRegion.GetBase();
 
     return true;
 }

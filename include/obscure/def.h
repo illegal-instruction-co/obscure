@@ -165,3 +165,11 @@ struct FAKE_TEB {
     BYTE SpareBytes[36];
     ULONG TxFsContext;
 };
+
+typedef enum _OBJECT_INFORMATION_CLASS {
+    ObjectBasicInformation,
+    ObjectNameInformation,
+    ObjectTypeInformation,
+    ObjectAllTypesInformation,
+    ObjectHandleInformation
+} OBJECT_INFORMATION_CLASS;
