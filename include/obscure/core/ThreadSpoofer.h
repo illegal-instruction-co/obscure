@@ -29,7 +29,21 @@ public:
 
     bool InstallHook();
 
+    __forceinline static void SetFiberEntryFunction(void(*entryFunction)()) {
+        _entryFunction = entryFunction;
+    }
+
+    static void RunAsFiber(std::shared_ptr<void>, size_t);
+
 private:
+
+    inline static thread_local void(*_entryFunction)() = nullptr;
+
+    static __forceinline void __stdcall FiberEntry(void* /*param*/) {
+        if (_entryFunction)
+            _entryFunction(); 
+    }
+
     std::shared_ptr<void> _fakePeb;
     std::shared_ptr<void> _fakeCodeRegion;
     std::shared_ptr<void> _fakeTeb;

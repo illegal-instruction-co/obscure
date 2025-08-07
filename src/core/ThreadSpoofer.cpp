@@ -200,6 +200,22 @@ static NTSTATUS WINAPI NtQueryInformationProcess_Hook(
     );
 }
 
+void ThreadSpoofer::RunAsFiber(shared_ptr<void> fakeStack, size_t stackSize) {
+    void* rawStack = fakeStack.get();
+
+    void* currentFiber = IsThreadAFiber() ? GetCurrentFiber() : ConvertThreadToFiber(nullptr);
+    if (!currentFiber) 
+        return;
+
+    void* customFiber = CreateFiber(stackSize, &FiberEntry, nullptr);
+    if (!customFiber) 
+        return;
+
+    SwitchToFiber(customFiber);
+
+    DeleteFiber(customFiber);
+}
+
 bool ThreadSpoofer::InstallHook()
 {
     if (!_fakeTeb)

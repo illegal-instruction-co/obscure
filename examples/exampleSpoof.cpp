@@ -164,6 +164,10 @@ bool TestSanityChecks() {
 // Entry point
 ////////////////////////////////////////////////////////////////
 
+void SensitiveOperation() {
+    std::cout << "[+] Running sensitive logic in spoofed fiber context..." << std::endl;
+}
+
 int main() {
     cout << "[*] Creating spoofed TEB..." << endl;
     ThreadSpoofer spoofer;
@@ -192,5 +196,50 @@ int main() {
 
     cout << (ok ? "[*] All tests passed." : "[!] Some tests failed.") << endl;
     this_thread::sleep_for(chrono::seconds(3));
+
+
+    cout << "[*] Running shellcode from fiber..." << endl;
+
+    BYTE* region = reinterpret_cast<BYTE*>(spoofer.GetFakeCodeRegion().get());
+    if (region) {
+    #ifdef _M_X64
+        // x64: MessageBoxA shellcode
+        unsigned char shellcode[] = {
+            0x48, 0x83, 0xEC, 0x28,                         // sub rsp, 0x28
+            0x48, 0x31, 0xC9,                               // xor rcx, rcx
+            0x48, 0x31, 0xD2,                               // xor rdx, rdx
+            0x49, 0xB8,                                     // mov r8, "Fiber OK\0"
+            'F', 'i', 'b', 'e', 'r', ' ', 'O', 'K',
+            0x49, 0xB9,                                     // mov r9, "Success\0"
+            'S', 'u', 'c', 'c', 'e', 's', 's', '\0',
+            0x48, 0xB8,                                     // mov rax, MessageBoxA
+        };
+
+        void* msgBox = GetProcAddress(GetModuleHandleA("user32.dll"), "MessageBoxA");
+        memcpy(shellcode + 30, &msgBox, sizeof(void*));
+
+        shellcode[38] = 0xFF; shellcode[39] = 0xD0;         // call rax
+        shellcode[40] = 0x48; shellcode[41] = 0x83; shellcode[42] = 0xC4; shellcode[43] = 0x28; // add rsp, 0x28
+        shellcode[44] = 0xC3;                               // ret
+
+        memcpy(region, shellcode, sizeof(shellcode));
+        spoofer.RunAsFiber(region, sizeof(shellcode));
+    #else
+        MessageBoxA(nullptr, "Fiber OK", "Success", MB_OK);
+    #endif
+    } else {
+        cerr << "[!] Failed to get fake code region." << endl;
+        return 1;
+    }
+
+    void* fiberStack = VirtualAlloc(nullptr, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (!fiberStack) {
+        std::cerr << "[!] VirtualAlloc failed for fiber stack." << std::endl;
+        return 1;
+    }
+
+    ThreadSpoofer::SetFiberEntryFunction(&SensitiveOperation);
+    ThreadSpoofer::RunAsFiber(std::shared_ptr<void>(fiberStack, [](void* p) { VirtualFree(p, 0, MEM_RELEASE); }), 0x10000);
+
     return ok ? 0 : 1;
 }

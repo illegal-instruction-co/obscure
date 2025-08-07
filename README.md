@@ -53,6 +53,7 @@ Obscure hooks key APIs like `NtQueryInformationThread`, `GetThreadContext`, `ZwQ
 - **Fake Call Stack & Executable Region:** It also sets up fake call stacks and executable regions so stack traces and memory queries appear consistent.
 - **API Hooks:** Using MinHook, it intercepts calls to critical Windows APIs and substitutes real pointers and data with fake ones.
 - **Thread-level Precision:** Because it works at the thread API level, Obscure can target stealth precisely where many tools look for clues.
+- **Fiber Switching (New!):** Obscure now allows switching the current thread into a fiber to run specific logic in a separate execution context. This is useful for hiding behavior from debuggers, breaking call stack continuity, or executing payloads outside the traditional thread flow — without spawning new threads or processes.
 
 ---
 
@@ -62,7 +63,7 @@ The project uses C++20 and CMake for building on Windows 11 (x64 and x86).
 
 - **Requirements:** Visual Studio 2022 or compatible C++ compiler, CMake, and MinHook library.
 - **Build:** `cmake` + `msbuild` or via VSCode tasks.
-- **Testing:** The `exampleSpoof.exe` demonstrates the core features and runs comprehensive tests of all hooks and fake data. It verifies TEB/PEB spoofing, stack context manipulation, and virtual memory query interception.
+- **Testing:** The `exampleSpoof.exe` demonstrates the core features and runs comprehensive tests of all hooks and fake data. It verifies TEB/PEB spoofing, stack context manipulation, and virtual memory query interception. The `exampleSpoof.exe` test now also includes a demo of **fiber-based execution redirection**. This switches the current thread into a fiber, runs a test function from within the fiber, and returns. It helps test stealth execution contexts that are difficult to trace using conventional stack inspection tools.
 
 Run `exampleSpoof.exe` to see detailed outputs confirming the hooks are active and returning the fake data as expected.
 
@@ -76,6 +77,7 @@ Obscure is a research project and a work in progress:
 - The fake data is plausible but minimal; future work could include more realistic PEB/TEB structures, multi-thread and multi-process support.
 - Integration with advanced anti-debug or anti-forensic methods is planned but not yet implemented.
 - Documentation and modular interfaces will improve as the project matures.
+- Fiber execution redirection is currently basic and limited to same-thread context. Future work may integrate fiber chains, scheduler interference, or partial call stack spoofing.
 
 ---
 
